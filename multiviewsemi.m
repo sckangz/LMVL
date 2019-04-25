@@ -1,9 +1,9 @@
-function [result]=multiviewsemi(X,y,r,labelind,beta,gamma)%yÓÃÓÚºâÁ¿¾«¶È
+function [result]=multiviewsemi(X,y,r,labelind,beta,gamma)%yç”¨äºè¡¡é‡ç²¾åº¦
 mv=size(X,2);
-num=size(X{1},1);
+[m,num]=size(X{1}');
 H=rand(r,num);
-c=length(unique(y));%cÎª´ØÖÖÀà
-S=eye(num);%SµÄ³õÊ¼»¯
+c=length(unique(y));%cä¸ºç°‡ç§ç±»
+S=eye(num);%Sçš„åˆå§‹åŒ–
 k=10;
 % initialize F
 D = diag(sum(S));
@@ -25,13 +25,19 @@ L = D - S;
 %    id = idh(i,2:k+2);
 %      S(i,id) = (di(k+1)-di)/(k*di(k+1)-sum(di(1:k))+eps);
 %     end
-for j=1:50
+options = optimset( 'Algorithm','interior-point-convex','Display','off');  for j=1:50
     for i=1:mv
-        wv{i}=X{i}'/H;
+        A=X{i}';
+for ij=1:m
+    Wv(ij,:) = quadprog(2*H*H',-2*A(ij,:)*H',[],[],[],[],zeros(num,1),[],[],options); 
+end
+% size(Wv)
+wv{i}=Wv;      
+        
         M(:,:,i)=wv{i}'*wv{i};
         N(:,:,i)=(wv{i})'*X{i}';
     end
-    H=sylvester(sum(M,3),beta*L,sum(N,3));%sumÖĞdimÊÇ·ñÊ¹ÓÃÕıÈ·£¿£¿£¿
+    H=sylvester(sum(M,3),beta*L,sum(N,3));%sumä¸­dimæ˜¯å¦ä½¿ç”¨æ­£ç¡®ï¼Ÿï¼Ÿï¼Ÿ
     F_old=F;
     dist_f=L2_distance_1(F',F');
     dist_h=L2_distance_1(H,H);
